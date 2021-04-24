@@ -29,7 +29,6 @@ public class Layer
         this.thisRecurrentMemoryDict = passedRecurrentMemoryDict;
         this.thisLayerDict = passedLayerDict;
 
-        initOutput();
     }
 
     public string Name
@@ -85,8 +84,13 @@ public class Layer
         get { return calculatedThisUpdate; }
         set { calculatedThisUpdate = value; }
     }
+    public bool CalculatedThisCost
+    {
+        get { return calculatedThisCost; }
+        set { calculatedThisCost = value; }
+    }
 
-    void initOutput()
+    public void initOutput()
     {
         if(layerType == "output" || layerType == "hidden" || layerType == "recurrent")
         {
@@ -98,10 +102,10 @@ public class Layer
         }
         else
         {
-            Debug.Log(name);
             output = thisInputDict[name];
         }
     }
+
 
     public void FeedForward()
     {
@@ -136,25 +140,21 @@ public class Layer
 
         }
     }
-    bool firstRun = true;
     
 
     // MAKE SURE THIS WORKING CORRECTLY
     public void CalculateCost(){
-        Debug.Log("Not First Run");
+        
         if (!calculatedThisCost)
         {
-            Debug.Log(calculatedThisUpdate);
             if (layerType == "output" && !name.Contains("zOutput"))
-            {
+            { 
                 string inputLayerName = "input" + name.Substring(6);
-                Debug.Log(inputLayerName);
                 Matrix<float> predictionError = thisInputDict[inputLayerName] - output;
                 cost = predictionError;
             }
             else
             {
-                Debug.Log("Calculated Cost");
                 cost = Matrix<float>.Build.Dense(shape[0], shape[1]);
                 foreach (KeyValuePair<string, Connection> outputInfo in outputConnectionDict)
                 {
@@ -170,28 +170,31 @@ public class Layer
         
         
 
-    /*
-        if layerType == "Output"
 
-            layer's cost is defined as an attribute of the layer class
-            layer's outputs are initialized in this class constructor
-                output, hidden, and recurrent layers to matrices of zeros
-                biases to 1
-                inputs to their actual values
 
-            cost = error + reinforcement
-            prediction_error = y_actual - y_predict
 
-            y_actual is the input, y_predict is the current output values
-            for example:
-            prediction_error = inputVisionRedLayer - outputVisionRedLayer
+        /*
+            if layerType == "Output"
 
-        else:
-            cost = matrix of zeros
-            for each output connection from this layer:
-                cost += this layer's output connection's costs * the weights from that connection
+                layer's cost is defined as an attribute of the layer class
+                layer's outputs are initialized in this class constructor
+                    output, hidden, and recurrent layers to matrices of zeros
+                    biases to 1
+                    inputs to their actual values
 
-        */
+                cost = error + reinforcement
+                prediction_error = y_actual - y_predict
+
+                y_actual is the input, y_predict is the current output values
+                for example:
+                prediction_error = inputVisionRedLayer - outputVisionRedLayer
+
+            else:
+                cost = matrix of zeros
+                for each output connection from this layer:
+                    cost += this layer's output connection's costs * the weights from that connection
+
+            */
     }
   
 /*

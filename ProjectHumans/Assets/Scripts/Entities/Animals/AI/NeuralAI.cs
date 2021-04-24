@@ -21,7 +21,7 @@ public class NeuralAI : AI
         { "inputBodyLayer", new Dictionary<string, string>(){ } },
         { "inputActionLayer", new Dictionary<string, string>(){ } },
         { "inputActionArgumentLayer", new Dictionary<string, string>(){ } },
-        { "recurrentHiddenLayer", new Dictionary<string, string>(){ { "zHiddenLayer", "dense"},
+        { "recurrentHiddenLayer", new Dictionary<string, string>(){ { "zHiddenLayer", "copy"},
                                                                { "biasLayer", "dense"} } },
         { "zHiddenLayer", new Dictionary<string, string>()
             {
@@ -75,8 +75,9 @@ public class NeuralAI : AI
 
     // dictionary of the layer objects
     Dictionary<string, Matrix<float>> inputDict = new Dictionary<string, Matrix<float>>();
-    
-    
+    Dictionary<string, Layer> inputLayerDict = new Dictionary<string, Layer>();
+
+
 
     public NeuralAI(Animal animal, Body body, DriveSystem drives, MotorSystem motor, SensorySystem senses, Phenotype phenotype) :
                     base(body, drives, motor, senses, phenotype)
@@ -87,7 +88,7 @@ public class NeuralAI : AI
         GetOutputConnectionDict();
         InitInputs();
         Feedforward();
-        UpdateWeights();
+        initNetwork();
         
         //foreach (Layer x in networkLayerDict.Values)
         //{
@@ -178,7 +179,8 @@ public class NeuralAI : AI
             {
                 Matrix<float> currentInput = Matrix<float>.Build.Dense(shape[0], shape[1]);
                 inputDict.Add(layerInfo.Key, currentInput);
-                
+                inputLayerDict.Add(layerInfo.Key, networkLayerDict[layerInfo.Key]);
+
             }
             if (layerInfo.Value[0] == "output")
             {
@@ -341,6 +343,14 @@ public class NeuralAI : AI
     //     }
     // }
     // create a copy of previous input layer
+    void initNetwork()
+    {
+        foreach (KeyValuePair<string, Layer> layerInfo in networkLayerDict)
+        {
+            layerInfo.Value.initOutput();
+
+        }
+    }
 
     void UpdateWeights(){
         // make sure we initialize all the non-bias layers to zero, and bias to 1
@@ -348,27 +358,24 @@ public class NeuralAI : AI
         // we may want to rename CalculatedThisUpdate and break it into two, CalculatedFeedforwardThisUpdate, and CalculatedWeightUpdateThisUpdate
         foreach (KeyValuePair<string, Layer> layerInfo in networkLayerDict)
         {
-            layerInfo.Value.CalculatedThisUpdate = false;
+            layerInfo.Value.CalculatedThisCost = false;
         }
-        foreach (KeyValuePair<string, Layer> outputLayer in outputLayerDict)
+        foreach (KeyValuePair<string, Layer> inputLayerInfo in inputLayerDict)
         {
-            if(!outputLayer.Value.Name.Contains("zOutput"))
-            {
-                outputLayer.Value.CalculateCost();
-            }
-                
+            inputLayerInfo.Value.CalculateCost();
         }
-
-
-        //     foreach all the connections
-        //         connection.calculateDeltaWeights
-
-        foreach (KeyValuePair<string, Layer> layerInfo in networkLayerDict)
+        foreach (Layer layer in networkLayerDict.Values)
         {
-            foreach(KeyValuePair<string, Connection> connection in layerInfo.Value.OutputConnectionDict)
+            if(layer.Name != "biasLayer")
             {
-                connection.Value.UpdateWeights();
+                foreach (Connection connection in layer.OutputConnectionDict.Values)
+                {
+                    //Debug.Log(connection.Sender + " " + connection.Recipient);
+                    connection.UpdateWeights();
+                }
             }
+            
+            
         }
     }
 
@@ -397,7 +404,7 @@ public class NeuralAI : AI
             UpdateWeights();
 
             Feedforward();
-            Debug.Log(networkLayerDict["outputActionLayer"].Output);
+            //Debug.Log(networkLayerDict["outputActionLayer"].Output);
         }
 
 
