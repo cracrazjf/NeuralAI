@@ -69,9 +69,9 @@ public class DriveSystem
         foreach (string label in stateLabelList) {
             string changeLabel = label + "_change";
             float changeValue = thisTraitDict[changeLabel];
-
             float toUpdate = GetStateDict()[label] + changeValue;
             SetState(label, toUpdate);
+
             // Ensure all drive states are in bounds
             if (this.stateDict[label] < 0) { this.SetState(label, 0.0f); }
             else if (this.stateDict[label] > 1) { this.SetState(label, 1.0f); }

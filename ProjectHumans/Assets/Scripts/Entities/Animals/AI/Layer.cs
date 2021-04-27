@@ -18,7 +18,6 @@ public class Layer
     Dictionary<string, Matrix<float>> thisRecurrentMemoryDict;
     Dictionary<string, Layer> thisLayerDict;
 
-    
     bool calculatedThisUpdate;
     bool calculatedThisCost;
 
@@ -102,10 +101,9 @@ public class Layer
         }
         else
         {
-            output = thisInputDict[name];
+            output = thisLayerDict[name].Output;
         }
     }
-
 
     public void FeedForward()
     {
@@ -113,12 +111,11 @@ public class Layer
         {
             if (layerType == "input")
             {
-                output = thisInputDict[name];
+                //output = thisInputDict[name];
             }
             else if (layerType == "recurrent")
             {
                 output = thisRecurrentMemoryDict[name];
-                //Animal.AddEventTime("Calculated " + this.name + " Feedforward");
             }
             else if (layerType == "bias"){
 
@@ -126,6 +123,8 @@ public class Layer
             else
             // its either a hidden or an output
             {
+                output = Matrix<float>.Build.Dense(shape[0], shape[1]);
+
                 foreach (KeyValuePair<string, Connection> inputInfo in inputConnectionDict)
                 {
                     //One layer could have multiple connections
@@ -141,6 +140,12 @@ public class Layer
         }
     }
     
+    public void PrintLayer(){
+        // for (int i =0; i < numUnits; i++){
+        //     string theValue = string.Format("{0:F3}", output[i,0]);
+        //     outputString += "    " + driveStateLabelList[i] + ": " + theValue + "\n";
+        // }
+    }
 
     // MAKE SURE THIS WORKING CORRECTLY
     public void CalculateCost(){
@@ -150,7 +155,7 @@ public class Layer
             if (layerType == "output" && !name.Contains("zOutput"))
             { 
                 string inputLayerName = "input" + name.Substring(6);
-                Matrix<float> predictionError = thisInputDict[inputLayerName] - output;
+                Matrix<float> predictionError = thisLayerDict[inputLayerName].output - output;
                 cost = predictionError;
             }
             else
@@ -162,16 +167,11 @@ public class Layer
                     thisLayerDict[outputInfo.Key].CalculateCost();
                     Matrix<float> x = thisLayerDict[outputInfo.Key].output;
                     Matrix<float> y = thisLayerDict[outputInfo.Key].cost;
-                    cost += currentConnection.CalculateDeltaWeights(x, y);
+                    cost += currentConnection.CalculateNetCost(x, y);
                 }
             }
             calculatedThisCost = true;
         }
-        
-        
-
-
-
 
         /*
             if layerType == "Output"
@@ -196,7 +196,16 @@ public class Layer
 
             */
     }
-  
+    void DisplayData(string layerName)
+    {
+        if(name == layerName)
+        {
+            string inputLayerName = "input" + name.Substring(6);
+            Debug.Log(name);
+            //Debug.Log(output);
+            Debug.Log(thisLayerDict[inputLayerName].output);
+        }
+    }
 /*
 
     example_list = [[], [], [], [], ...]
